@@ -11,5 +11,10 @@
         "database": "nger",
         "name": "nger",
         "synchronize": true
-    }
+    },
+    "admin": "src/admin.ts",
+    "h5": "src/app.ts",
+    "pc": "src/pc.ts",
+    "weapp": "src/app.ts",
+    "alipay": "src/app.ts"
 }

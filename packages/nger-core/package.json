@@ -12,7 +12,7 @@
     "test": "__tests__"
   },
   "files": [
-    "lib"
+    "dist"
   ],
   "publishConfig": {
     "registry": "http://registry.npmjs.org/"
@@ -21,10 +21,11 @@
     "type": "git",
     "url": "git+https://github.com/meepobrother/nger.git"
   },
-  "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
-  },
+  "scripts": {},
   "bugs": {
     "url": "https://github.com/meepobrother/nger/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^11.13.8"
   }
 }

@@ -1,8 +1,10 @@
-<p align="center"><img width="120" src="./logo.png" alt="Vue logo"></p>
+<p align="center"><img width="120" src="./docs/logo.png" alt="Vue logo"></p>
 
-<h2 align="center">用ng自由组合开发小程序</h2>
+<h2 align="center">用ng编制世界</h2>
 
 > 项目名称意义，用ng的人！I am a nger! 
+
+## 每个nger人心中都有用ng编制世界的梦想!
 
 <font color="green">Warning!</font> <font color="green">Warning!</font> <font color="green">Warning!</font> 这不仅仅是一个前端项目。
 
@@ -12,7 +14,10 @@ vue、react相继都有了小程序的开发框架，作为一个nger，也该�
 技术栈说明：Typeorm/Nestjs/Angular/Ngrx/JSX/Injector(依赖注入)/Decorator(装饰器)/Webpack/Less/Sass/Gulp...
 
 <h2 align="center">系统架构</h2>
-<p align="center"><img style="width:100%;" src="./nger系统概述.png" alt="Vue logo"></p>
+
+面向终端用户对开发者友好的框架
+
+<p align="center"><img style="width:100%;" src="./docs/nger系统概述.png" alt="Vue logo"></p>
 
 > 用装饰器实现应用跨平台，如Controller装饰器，在前端就是发送http请求，在后端就是响应http请求
 > 主要目标nger-compiler根据平台需求,选择性的去除或修改代码,nger-platform-*提供装饰器解析器。
@@ -67,6 +72,7 @@ vue、react相继都有了小程序的开发框架，作为一个nger，也该�
 - [ ] `yarn cli build`构建打包
   - [ ] 手机h5 `yarn cli build h5`
   - [ ] pc网站 `yarn cli build pc`
+  - [x] 后台管理 `yarn cli build admin [--watch]`
   - [ ] 微信公众号 `yarn cli build wechat`
   - [ ] 微信小程序 `yarn cli build weapp`
   - [ ] 支付宝小程序 `yarn cli build alipay`
@@ -194,8 +200,6 @@ vue、react相继都有了小程序的开发框架，作为一个nger，也该�
 - App和NgModule对应。全局唯一
 - @Directive和小程序的指令对应，这里有区别ng中可以自定义指令，小程序不行。不唯一。
 - @Page和小程序的Page对应。全局唯一
-
-
 
 ### Controller
 > 客户端运行时需要编译器转码
@@ -403,4 +407,4 @@ Component({
 
 ## 资助
 
-<p><img width="220" src="./WechatIMG95.jpeg" alt="Vue logo"></p>
+<p><img width="220" src="./docs/WechatIMG95.jpeg" alt="Vue logo"></p>
