@@ -1,4 +1,5 @@
-import { Command, Inject, Logger } from 'nger-core'
+import { Command, Inject } from 'nger-core'
+import { Logger } from 'nger-logger';
 
 @Command({
     name: 'pack [name]',

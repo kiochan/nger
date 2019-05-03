@@ -14,15 +14,13 @@ export function createPlatformFactory(
         let platform = getPlatform();
         if (!platform || platform.injector.get(ALLOW_MULTIPLE_PLATFORMS, false)) {
             if (parentPlatformFactory) {
-                const allProviders = providers
-                    .concat(extraProviders)
-                    .concat({ provide: marker, useValue: true })
-                parentPlatformFactory(allProviders);
+                parentPlatformFactory(
+                    providers.concat(extraProviders)
+                        .concat({ provide: marker, useValue: true })
+                );
             } else {
                 const injectedProviders: StaticProvider[] =
-                    providers
-                        .concat(extraProviders)
-                        .concat({ provide: marker, useValue: true });
+                    providers.concat(extraProviders).concat({ provide: marker, useValue: true });
                 createPlatform(Injector.create({ providers: injectedProviders, name: desc }));
             }
         }

@@ -1,17 +1,21 @@
 import { createServer } from 'http';
-import { Injector } from 'nger-di'
+import { Injector, InjectFlags } from 'nger-di'
 import Koa from 'koa';
-import {  NgModuleRef, getPort } from 'nger-core';
+import { DevModelToken, NgModuleRef, getPort } from 'nger-core';
 import { NgerUtil } from 'nger-util';
 import Router from 'koa-router';
 import Static from 'koa-static';
 import { Logger, createPlatformFactory, NgModuleBootstrap, NgModuleMetadataKey, NgModuleClassAst, ControllerMetadataKey, ControllerClassAst, GetMethodAst, PostMethodAst, GetMetadataKey, PostMetadataKey } from 'nger-core';
 import { join } from 'path';
+import NgerPlatformAxios from 'nger-platform-axios'
 import NgerPlatformNode from 'nger-platform-node'
+
 const compress = require('koa-compress');
+// import webpackKoa2Middleware from 'webpack-koa2-middleware'
+import { WebpackService } from 'nger-module-webpack';
 import { TypeContext } from 'ims-decorator';
-import { InjectionToken } from 'nger-di';
-export const AdminTemplateEntry = new InjectionToken<string>(`AdminTemplateEntry`)
+import dev from 'webpack-dev-server';
+
 export class NgerPlatformKoa extends NgModuleBootstrap {
     public injector: Injector
     public app: Koa;
@@ -52,6 +56,7 @@ export class NgerPlatformKoa extends NgModuleBootstrap {
                 this.handler(declaration, router, controller, controllerFactory.create(this.injector).instance);
             }
         });
+        this.attachWebpackCompiler(ref);
         this.app.use(compress({
             filter: function (content_type) {
                 return /text/i.test(content_type)
@@ -64,6 +69,7 @@ export class NgerPlatformKoa extends NgModuleBootstrap {
             this.logger.info(`app start at http://localhost:${port}`)
         });
     }
+
     handler(declaration: TypeContext, router: any, controller: any, instance: any) {
         const gets = declaration.getMethod(GetMetadataKey) as GetMethodAst[];
         gets.map(get => {
@@ -89,6 +95,26 @@ export class NgerPlatformKoa extends NgModuleBootstrap {
                 }
             })
         });
+    }
+
+    async attachWebpackCompiler<T>(ref: NgModuleRef<T>) {
+        ref.injector.debug();
+        const webpack = ref.injector.get(WebpackService, undefined);
+        const config = webpack.config;
+        const isDevModel = ref.injector.get(DevModelToken, false);
+        if (isDevModel) {
+            let publicPath = '/';
+            if (config) {
+                if (config.output && config.output.publicPath) publicPath = config.output.publicPath
+            }
+            new dev(webpack.compiler, {
+                historyApiFallback: true,
+                hot: true,
+                open: true,
+                inline: true,
+                publicPath
+            }).listen(3001);
+        }
     }
 }
 

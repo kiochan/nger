@@ -1,4 +1,5 @@
-import NgerPlatformTest from "nger-platform-test";
+import { NgerPlatformTest } from "nger-platform-test";
 import { getTypeContext } from './util'
+const test = new NgerPlatformTest();
 const app = getTypeContext('src/admin');
-NgerPlatformTest().bootstrapModule(app)
+test.bootstrap(app)

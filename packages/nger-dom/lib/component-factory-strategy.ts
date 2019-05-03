@@ -8,10 +8,9 @@
 
 import {
   ApplicationRef, ComponentFactory, ComponentFactoryResolver,
-  ComponentRef, EventEmitter, OnChanges, SimpleChange,
+  ComponentRef, EventEmitter, Injector, OnChanges, SimpleChange,
   SimpleChanges, Type
-} from 'nger-core';
-import { Injector } from 'nger-di'
+} from '@angular/core';
 import { Observable, merge } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -27,12 +26,14 @@ const DESTROY_DELAY = 10;
  *
  * @publicApi
  */
-export class ComponentNgElementStrategyFactory<T> implements NgElementStrategyFactory {
-  componentFactory: ComponentFactory<T>;
-  constructor(private component: Type<T>, private injector: Injector) {
+export class ComponentNgElementStrategyFactory implements NgElementStrategyFactory {
+  componentFactory: ComponentFactory<any>;
+
+  constructor(private component: Type<any>, private injector: Injector) {
     this.componentFactory =
-      injector.get(ComponentFactoryResolver).resolveComponentFactory<T>(component);
+      injector.get(ComponentFactoryResolver).resolveComponentFactory(component);
   }
+
   create(injector: Injector) {
     return new ComponentNgElementStrategy(this.componentFactory, injector);
   }
@@ -44,16 +45,34 @@ export class ComponentNgElementStrategyFactory<T> implements NgElementStrategyFa
  *
  * @publicApi
  */
-export class ComponentNgElementStrategy<T> implements NgElementStrategy {
+export class ComponentNgElementStrategy implements NgElementStrategy {
+  /** Merged stream of the component's output events. */
+  // TODO(issue/24571): remove '!'.
   events !: Observable<NgElementStrategyEvent>;
-  private componentRef !: ComponentRef<T> | null;
+
+  /** Reference to the component that was created on connect. */
+  // TODO(issue/24571): remove '!'.
+  private componentRef !: ComponentRef<any> | null;
+
+  /** Changes that have been made to the component ref since the last time onChanges was called. */
   private inputChanges: SimpleChanges | null = null;
+
+  /** Whether the created component implements the onChanges function. */
   private implementsOnChanges = false;
+
+  /** Whether a change detection has been scheduled to run on the component. */
   private scheduledChangeDetectionFn: (() => void) | null = null;
+
+  /** Callback function that when called will cancel a scheduled destruction on the component. */
   private scheduledDestroyFn: (() => void) | null = null;
+
+  /** Initial input values that were set before the component was created. */
   private readonly initialInputValues = new Map<string, any>();
+
+  /** Set of inputs that were not initially set when the component was created. */
   private readonly uninitializedInputs = new Set<string>();
-  constructor(private componentFactory: ComponentFactory<T>, private injector: Injector) { }
+
+  constructor(private componentFactory: ComponentFactory<any>, private injector: Injector) { }
 
   /**
    * Initializes a new component if one has not yet been created and cancels any scheduled
@@ -66,6 +85,7 @@ export class ComponentNgElementStrategy<T> implements NgElementStrategy {
       this.scheduledDestroyFn = null;
       return;
     }
+
     if (!this.componentRef) {
       this.initializeComponent(element);
     }
@@ -80,6 +100,7 @@ export class ComponentNgElementStrategy<T> implements NgElementStrategy {
     if (!this.componentRef || this.scheduledDestroyFn !== null) {
       return;
     }
+
     // Schedule the component to be destroyed after a small timeout in case it is being
     // moved elsewhere in the DOM
     this.scheduledDestroyFn = scheduler.schedule(() => {
@@ -127,20 +148,20 @@ export class ComponentNgElementStrategy<T> implements NgElementStrategy {
    */
   protected initializeComponent(element: HTMLElement) {
     const childInjector = Injector.create({ providers: [], parent: this.injector });
-    // 项目node elements
     const projectableNodes =
       extractProjectableNodes(element, this.componentFactory.ngContentSelectors);
-    // element
-    this.componentRef = this.componentFactory.create(childInjector);
-    // host view
+    this.componentRef = this.componentFactory.create(childInjector, projectableNodes, element);
+
     this.implementsOnChanges =
       isFunction((this.componentRef.instance as any as OnChanges).ngOnChanges);
+
     this.initializeInputs();
     this.initializeOutputs();
+
     this.detectChanges();
+
     const applicationRef = this.injector.get<ApplicationRef>(ApplicationRef);
-    // 挂载页面
-    applicationRef.attachView(this.componentRef, childInjector);
+    applicationRef.attachView(this.componentRef.hostView);
   }
 
   /** Set any stored initial inputs on the component's properties. */
@@ -150,9 +171,12 @@ export class ComponentNgElementStrategy<T> implements NgElementStrategy {
       if (initialValue) {
         this.setInputValue(propName, initialValue);
       } else {
+        // Keep track of inputs that were not initialized in case we need to know this for
+        // calling ngOnChanges with SimpleChanges
         this.uninitializedInputs.add(propName);
       }
     });
+
     this.initialInputValues.clear();
   }
 
@@ -162,6 +186,7 @@ export class ComponentNgElementStrategy<T> implements NgElementStrategy {
       const emitter = (this.componentRef!.instance as any)[propName] as EventEmitter<any>;
       return emitter.pipe(map((value: any) => ({ name: templateName, value })));
     });
+
     this.events = merge(...eventEmitters);
   }
 
@@ -170,6 +195,9 @@ export class ComponentNgElementStrategy<T> implements NgElementStrategy {
     if (!this.implementsOnChanges || this.inputChanges === null) {
       return;
     }
+
+    // Cache the changes and set inputChanges to null to capture any changes that might occur
+    // during ngOnChanges.
     const inputChanges = this.inputChanges;
     this.inputChanges = null;
     (this.componentRef!.instance as any as OnChanges).ngOnChanges(inputChanges);
@@ -183,6 +211,7 @@ export class ComponentNgElementStrategy<T> implements NgElementStrategy {
     if (this.scheduledChangeDetectionFn) {
       return;
     }
+
     this.scheduledChangeDetectionFn = scheduler.scheduleBeforeRender(() => {
       this.scheduledChangeDetectionFn = null;
       this.detectChanges();

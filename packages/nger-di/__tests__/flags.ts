@@ -1,4 +1,4 @@
-import { OptionFlags, InjectFlags } from '../lib';
+import { OptionFlags, InjectFlags } from '../lib/injector';
 
 // CheckParent = 0;Optional = 0;
 export function isCheckSelf(options: OptionFlags) {

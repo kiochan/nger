@@ -1,5 +1,11 @@
 # `nger-platform-node`
 
-> nodejs核心平台
+> TODO: description
 
-cli/koa/express
+## Usage
+
+```
+const ngerPlatformNode = require('nger-platform-node');
+
+// TODO: DEMONSTRATE API
+```

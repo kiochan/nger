@@ -15,7 +15,6 @@ export interface NgModuleOptions {
     schemas?: Array<SchemaMetadata>;
     id?: string;
     jit?: true;
-    fileName?: string;
 }
 export const NgModule = makeDecorator<NgModuleOptions>(NgModuleMetadataKey);
 export const APP_ALLREADY = new InjectionToken<(() => void)[]>(`APP_ALLREADY`);
@@ -23,7 +22,6 @@ export class NgModuleClassAst extends ClassContext<NgModuleOptions> {
     declarations: TypeContext[] = [];
     constructor(ast: any, context: any) {
         super(ast, context);
-        const def = this.ast.metadataDef;
     }
 }
 export function isNgModuleClassAst(ast: ClassAst): ast is ClassAst<NgModuleOptions> {
