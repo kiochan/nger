@@ -1,7 +1,14 @@
 /node_modules/
 /back/
 /data/
-/attachment/
-/template/
+/attachment
+/template
+/dist/
 /.temp
 /testing
+/**/.rts2_cache_cjs
+/**/.rts2_cache_es
+/**/.rts2_cache_umd
+/**/node_modules
+/app
+/hooks

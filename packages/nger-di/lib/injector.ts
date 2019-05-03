@@ -1,10 +1,9 @@
-import { ConsoleLogger, LogLevel, Logger } from 'nger-logger';
 import { stringify } from './util';
 import {
     Type, FactoryProvider, StaticClassProvider, ValueProvider,
     ExistingProvider, ConstructorProvider, isValueProvider,
     StaticProvider, isExistingProvider, isStaticClassProvider,
-    isFactoryProvider
+    isFactoryProvider, InjectFlags, OptionFlags
 } from './type'
 import { InjectionToken } from './injection_token';
 export const NG_TEMP_TOKEN_PATH = 'ngTempTokenPath';
@@ -33,9 +32,6 @@ export interface DependencyRecord {
 }
 // 全局record记录map
 export const globalRecord: Map<any, Record | Record[]> = new Map();
-globalRecord.set(Logger, new Record(() => {
-    return new ConsoleLogger(LogLevel.debug)
-}, [], undefined));
 // 设置全局record
 export function setRecord(token: any, record: Record | Record[] | undefined) {
     if (record) globalRecord.set(token, record)
@@ -234,29 +230,6 @@ export type IToken<T> =
     InjectionToken<T> |
     ITokenString<T> |
     ITokenAny<T>;
-export enum InjectFlags {
-    // TODO(alxhub): make this 'const' when ngc no longer writes exports of it into ngfactory files.
-    /** Check self and check parent injector if needed */
-    Default = 0b0000,
-    /**
-     * Specifies that an injector should retrieve a dependency from any injector until reaching the
-     * host element of the current component. (Only used with Element Injector)
-     */
-    Host = 0b0001,
-    /** Don't ascend to ancestors of the node requesting injection. */
-    Self = 0b0010,
-    /** Skip the node that is requesting injection. */
-    SkipSelf = 0b0100,
-    /** Inject `defaultValue` instead if token not found. */
-    Optional = 0b1000,
-}
-
-export enum OptionFlags {
-    Optional = 1 << 0,
-    CheckSelf = 1 << 1,
-    CheckParent = 1 << 2,
-    Default = CheckSelf | CheckParent
-}
 
 export const topInjector = {
     get: inject
@@ -314,14 +287,12 @@ export class Injector implements IInjector {
     static NULL: Injector = NULL_INJECTOR as Injector;
     _records: Map<any, Record | Record[]> = new Map();
     exports: Map<any, Record | Record[]> = new Map();
-    logger: Logger;
     parent: Injector;
     constructor(
         records: StaticProvider[],
         parent: Injector | null = null,
         public source: string | null = null
     ) {
-        this.logger = inject(Logger, new ConsoleLogger(LogLevel.debug)) as Logger;
         if (!parent) {
             parent = Injector.NULL as Injector;
         }
@@ -356,9 +327,9 @@ export class Injector implements IInjector {
     debug() {
         this._records.forEach((item, key) => {
             if (Array.isArray(item)) {
-                this.logger.debug(`injector:multi:${this.source} ${key.name} registed ${item.length}`)
+                console.debug(`injector:multi:${this.source} ${key.name} registed ${item.length}`)
             } else {
-                this.logger.debug(`injector:${this.source} ${(key && key.name) || ''} registed, Dependeny: ${stringify(item.deps.map(dep => dep.token))}`)
+                console.debug(`injector:${this.source} ${(key && key.name) || ''} registed, Dependeny: ${stringify(item.deps.map(dep => dep.token))}`)
             }
         });
     }
@@ -393,7 +364,7 @@ export class Injector implements IInjector {
     get<T>(token: IToken<T>, notFound?: T | null, flags: InjectFlags = InjectFlags.Default): T {
         const record = this._records.get(token);
         try {
-            return tryResolveToken(
+            return resolveToken(
                 token,
                 record,
                 this._records,

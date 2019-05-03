@@ -1,9 +1,22 @@
 import { TypeContext, isType, Type, ConstructorContext, } from 'ims-decorator';
 import {
-    NgModuleMetadataKey, NgModuleClassAst, OptionalConstructorAst,
-    SelfConstructorAst, InjectConstructorAst, HostConstructorAst,
-    SkipSelfConstructorAst
-} from 'nger-core';
+    NgModuleMetadataKey, NgModuleClassAst,
+} from '../decorators/ngModule';
+import {
+    SelfConstructorAst,
+} from '../decorators/self';
+import {
+    InjectConstructorAst,
+} from '../decorators/inject';
+import {
+    HostConstructorAst,
+} from '../decorators/host';
+import {
+    SkipSelfConstructorAst,
+} from '../decorators/skip-self';
+import {
+    OptionalConstructorAst
+} from '../decorators/optional'
 import {
     ModuleWithProviders, Provider, InjectFlags, isTypeProvider, isClassProvider, StaticProvider
 } from 'nger-di';
@@ -66,8 +79,9 @@ export function createStaticProvider(context: TypeContext, providers: StaticProv
         // 类 👌
         declarations.map(imp => {
             let impContext = context.visitType(imp) as TypeContext;
+            // 是否要记录呢
             ngModule.declarations.push(impContext);
-            // 这部分不加入依赖注入
+            // 这部分不加入依赖注入,这个地方
             providers.push({
                 provide: imp,
                 useFactory: (...params: any[]) => new imp(...params),

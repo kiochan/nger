@@ -2,6 +2,8 @@ import { NgModuleRef } from './ng_module_ref'
 import { Injector, Type } from 'nger-di'
 import { NgModuleFactory } from './ng_module_factory'
 import { ErrorHandler } from './error_handler';
+import { remove, optionsReducer } from './lang'
+import { ApplicationInitStatus } from './application_init_status'
 export abstract class NgModuleBootstrap {
     abstract run<T>(moduleRef: NgModuleRef<T>): Promise<any>;
 }
@@ -20,7 +22,7 @@ export class PlatformRef {
     ): Promise<NgModuleRef<M>> {
         const options = optionsReducer({}, compilerOptions);
         // 注册injector
-        return compileNgModuleFactory(this.injector, options, moduleType)
+        return compileNgModuleFactory<M>(this.injector, options, moduleType)
             .then(moduleFactory => {
                 return this.bootstrapModuleFactory(moduleFactory, options)
             });
@@ -31,23 +33,27 @@ export class PlatformRef {
         options?: BootstrapOptions
     ): Promise<NgModuleRef<M>> {
         // todo 注入启动参数
-        const injector = this.injector.create([]);
+        const injector = this.injector.create([], moduleFactory.moduleType.name);
         const moduleRef = moduleFactory.create(injector);
         const exceptionHandler = moduleRef.injector.get(ErrorHandler, undefined) as ErrorHandler;
         if (!exceptionHandler) {
             throw new Error('No ErrorHandler. Please Regist ErrorHandler');
         }
         moduleRef.onDestroy(() => remove(this._modules, moduleRef));
+        const initStatus: ApplicationInitStatus = moduleRef.injector.get(ApplicationInitStatus);
+        await initStatus.runInitializers();
         await this._moduleDoBootstrap(moduleRef)
         return moduleRef;
     }
 
-    private async _moduleDoBootstrap(moduleRef: NgModuleRef<any>) {
+    private _moduleDoBootstrap(moduleRef: NgModuleRef<any>) {
         const bootstrap = this.injector.get<NgModuleBootstrap[]>(NgModuleBootstrap, []);
-        const allBoot = bootstrap.map((b: NgModuleBootstrap) => {
-            return b.run(moduleRef);
+        console.log(`总共有 ${bootstrap.length} 个启动项目`)
+        const tasks: any[] = [];
+        bootstrap.map((b: NgModuleBootstrap) => {
+            tasks.push(b.run(moduleRef));
         });
-        return Promise.all(allBoot)
+        return Promise.all(tasks)
     }
 
     // 注册销毁钩子
@@ -66,21 +72,6 @@ export class PlatformRef {
     }
 }
 
-function optionsReducer<T extends Object>(dst: any, objs: T | T[]): T {
-    if (Array.isArray(objs)) {
-        dst = objs.reduce(optionsReducer, dst);
-    } else {
-        dst = { ...dst, ...(objs as any) };
-    }
-    return dst;
-}
-
-function remove<T>(list: T[], el: T): void {
-    const index = list.indexOf(el);
-    if (index > -1) {
-        list.splice(index, 1);
-    }
-}
 function compileNgModuleFactory<M>(
     injector: Injector,
     options: BootstrapOptions,

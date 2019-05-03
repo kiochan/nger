@@ -5,9 +5,8 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { Type } from 'nger-core';
+import { Type, ComponentFactoryResolver } from 'nger-core';
 import { Injector } from 'nger-di'
-import { ComponentFactoryResolver } from '@angular/core'
 const elProto = Element.prototype as any;
 const matches = elProto.matches || elProto.matchesSelector || elProto.mozMatchesSelector ||
   elProto.msMatchesSelector || elProto.oMatchesSelector || elProto.webkitMatchesSelector;
@@ -34,7 +33,6 @@ export const scheduler = {
     // TODO(gkalpak): Implement a better way of accessing `requestAnimationFrame()`
     //                (e.g. accounting for vendor prefix, SSR-compatibility, etc).
     if (typeof window === 'undefined') {
-      // For SSR just schedule immediately.
       return scheduler.schedule(taskFn, 0);
     }
 
@@ -114,7 +112,6 @@ export function getDefaultAttributeToPropertyInputs(
   inputs.forEach(({ propName, templateName }) => {
     attributeToPropertyInputs[camelToDashCase(templateName)] = propName;
   });
-
   return attributeToPropertyInputs;
 }
 
